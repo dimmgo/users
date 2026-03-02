@@ -57,12 +57,7 @@ class UserService
     public function updateUser(UserUpdateDto $dto): User
     {
         $this->validate($dto);
-
-        /** @var User $user */
-        $user = $this->userRepository->find($dto->id);
-        if (!$user) {
-            throw new NotFoundHttpException('User not found');
-        }
+        $user = $this->findUserById($dto->id);
 
         $existingUser = $this->userRepository->findOneBy(['login' => $dto->login]);
         if ($existingUser && $existingUser->getId() !== $user->getId()) {
@@ -82,12 +77,7 @@ class UserService
     public function patchUser(UserPatchDto $dto): User
     {
         $this->validate($dto);
-
-        /** @var User $user */
-        $user = $this->userRepository->find($dto->id);
-        if (!$user) {
-            throw new NotFoundHttpException('User not found');
-        }
+        $user = $this->findUserById($dto->id);
 
         if ($dto->login !== null) {
             /** @var User $existingUser */
@@ -123,27 +113,27 @@ class UserService
     {
         $this->validate($dto);
 
-        /** @var User $user */
-        $user = $this->userRepository->find($dto->id);
-        if (!$user) {
-            throw new NotFoundHttpException('User not found');
-        }
-
-        return $user;
+        return $this->findUserById($dto->id);
     }
 
     public function deleteUser(UserDeleteDto $dto): void
     {
         $this->validate($dto);
+        $user = $this->findUserById($dto->id);
 
+        $this->em->remove($user);
+        $this->em->flush();
+    }
+
+    private function findUserById(int $id): User
+    {
         /** @var User $user */
-        $user = $this->userRepository->find($dto->id);
+        $user = $this->userRepository->find($id);
         if (!$user) {
             throw new NotFoundHttpException('User not found');
         }
 
-        $this->em->remove($user);
-        $this->em->flush();
+        return $user;
     }
 
     private function validate(object $object): void
